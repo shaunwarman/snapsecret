@@ -1,21 +1,25 @@
 const fs = require('fs');
 const path = require('path');
 
-global.__secret__ = {};
+const {EventEmitter} = require('events');
 
-class Secret {
-  constructor() {
+global.__secrets__ = {};
+
+class Secret extends EventEmitter {
+  constructor(options = {}) {
+    super();
+    
     const { 
       file = '.secrets', 
-      path = process.cwd(),
+      filepath = process.cwd(),
       snap = true
     } = options;
     
     this.file = file;
-    this.path = path;
+    this.filepath = filepath;
     this.snap = snap;
     
-    this.location = path.resolve(this.path, this.file);
+    this.location = path.resolve(this.filepath, this.file);
     
     this.on('consumed', this._destroy.bind(this));
   }
@@ -32,9 +36,9 @@ class Secret {
   }
    
   _parse(secrets) {
-    secrets.split('\n').forEach(line => {
+    secrets.toString().split('\n').forEach(line => {
       const [key, value] = line.split('=');
-      global.__secret__[key] = value;
+      global.__secrets__[key] = value;
     });
   }
   
@@ -52,6 +56,8 @@ class Secret {
   }
   
   _destroy() {
-    fs.unlink(this.location);
+    fs.unlinkSync(this.location);
   }
 }
+
+module.exports = Secret;
