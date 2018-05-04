@@ -21,28 +21,28 @@ class Secret extends EventEmitter {
     
     this.location = path.resolve(this.filepath, this.file);
     
-    this.on('consumed', this._destroy.bind(this));
+    this.on('consumed', Secret.destroy);
   }
   
   consume() {
     const exists = fs.existsSync(this.location);
     if (exists) {
-      const secrets = this._read();
+      const secrets = Secret.read();
       if (secrets) {
-        this._parse(secrets);
+        Secret.parse(secrets);
         this.emit('consumed');
       }
     }
   }
    
-  _parse(secrets) {
+  static parse(secrets) {
     secrets.toString().split('\n').forEach(line => {
       const [key, value] = line.split('=');
       global.__secrets__[key] = value;
     });
   }
   
-  _read() {
+  static read() {
     let secrets = null;
     
     try {
@@ -55,7 +55,7 @@ class Secret extends EventEmitter {
     }
   }
   
-  _destroy() {
+  static destroy() {
     fs.unlinkSync(this.location);
   }
 }
